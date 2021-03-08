@@ -19,9 +19,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SongController.class)
 public class MvcTest {
@@ -39,32 +40,32 @@ public class MvcTest {
     void getAllSongsShouldReturnSongsAsJson() throws Exception {
         when(songService.getAllSongs()).thenReturn(List.of(new SongDto(1L, "Test", "Test", "Test")));
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/songs")
-                .accept(MediaType.APPLICATION_JSON)).andReturn();
-
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(200);
+        mockMvc.perform(MockMvcRequestBuilders.get("/songs")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].title").value("Test"))
+                .andExpect(status().isOk())
+                .andReturn();
     }
 
     @Test
     void getOneSongShouldReturnSongAsJson() throws Exception {
         when(songService.getOne(1L)).thenReturn(Optional.of(new SongDto(1L, "Test", "Test", "Test")));
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/songs/1")
-                .accept(MediaType.APPLICATION_JSON)).andReturn();
-
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(200);
+        mockMvc.perform(MockMvcRequestBuilders.get("/songs/1")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.title").value("Test"))
+                .andExpect(status().isOk())
+                .andReturn();
     }
 
     @Test
     void getOneSongWithNonExistingIdShouldReturnNotFoundException() throws Exception {
         when(songService.getOne(1L)).thenReturn(Optional.empty());
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/songs/1")
+        mockMvc.perform(MockMvcRequestBuilders.get("/songs/1")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andReturn();
-
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
@@ -73,24 +74,20 @@ public class MvcTest {
 
         when(songService.createSong(eq(songDto))).thenReturn(new SongDto(1L,"Test","Test", "Test"));
 
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/songs")
+        mockMvc.perform(MockMvcRequestBuilders.post("/songs")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(songDto))
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn();
-
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(HttpStatus.CREATED.value());
     }
 
     @Test
     void callingDeleteShouldReturnOK() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/songs/{id}", "1")
+        mockMvc.perform(MockMvcRequestBuilders.delete("/songs/{id}", "1")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
-
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value());
     }
 
     @Test
